@@ -1,31 +1,48 @@
-SRC 		= .
-LIBRARY 	=
-DEFINES 	= -DNDEBUG
+#
+# Makefile for pcpmdnsd
+#
 
-vpath %.c $(SRC)
+PREFIX = /usr/local
+BINDIR = $(PREFIX)/bin
 
-INCLUDE = -I$(SRC) 
+CFLAGS += -Wall -pedantic -std=gnu99
+#CFLAGS += -g
+CFLAGS += -Os -DNDEBUG
+LDLIBS = -lpthread
+INSTALL_PROGRAM="install"
+ifneq ($(CROSS_COMPILE),)
+  CC = gcc
+  CC := $(CROSS_COMPILE)$(CC)
+  AR := $(CROSS_COMPILE)$(AR)
+endif
 
-SOURCES = mdns.c mdnsd.c tinysvcmdns.c
-		
-OBJECTS = $(patsubst %.c,$(OBJ)/%.o,$(SOURCES)) 
+BIN=pcpmdnsd
 
-all: $(EXECUTABLE)
+LIBTINYSVCMDNS_OBJS = mdns.o mdnsd.o
 
-$(EXECUTABLE): $(OBJECTS)
-	$(CC) $(OBJECTS) $(LIBRARY) $(LDFLAGS) -o $@
+.PHONY: all clean
 
-$(OBJECTS): | bin $(OBJ)
+all: $(BIN) libtinysvcmdns.a
 
-$(OBJ):
-	@mkdir -p $@
-	
-bin:	
-	@mkdir -p bin
-
-$(OBJ)/%.o : %.c
-	$(CC) $(CFLAGS) $(CPPFLAGS) $(INCLUDE) $< -c -o $@
-	
 clean:
-	rm -f $(OBJECTS) $(EXECUTABLE) 
+	-$(RM) *.o
+	-$(RM) *.bin
+	-$(RM) mdns
+	-$(RM) $(BIN)
+	-$(RM) libtinysvcmdns.a
+
+mdns: mdns.o
+
+mdnsd: mdns.o mdnsd.o
+
+#testmdnsd: testmdnsd.o libtinysvcmdns.a
+pcpmdnsd: pcpmdnsd.o libtinysvcmdns.a
+
+libtinysvcmdns.a: $(patsubst %, libtinysvcmdns.a(%), $(LIBTINYSVCMDNS_OBJS))
+
+install: pcpmdnsd
+	install -D $(BIN) $(BINDIR)/$(BIN)
+
+install-strip: pcpmdnsd
+	install -D -s $(BIN) $(BINDIR)/$(BIN)
 
