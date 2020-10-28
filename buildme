@@ -1,0 +1,20 @@
+#!/bin/sh
+
+case $(uname -m) in
+   armv*)
+      export CFLAGS="-Os -pipe -march=armv6zk -mtune=arm1176jzf-s -mfpu=vfp"
+      export CXXFLAGS="-Os -pipe -fno-exceptions -fno-rtti -march=armv6zk -mtune=arm1176jzf-s -mfpu=vfp"
+		PCPBIN=pcpmdnsd.armhf
+   ;;
+   aarch64)
+      export CFLAGS="-Os -pipe -march=armv8-a+crc -mtune=cortex-a72"
+      export CXXFLAGS="-Os -pipe -fno-exceptions -fno-rtti -march=armv8-a+crc -mtune=cortex-a72"
+		PCPBIN=pcpmdnsd.aarch64
+
+   ;;
+esac
+
+make clean
+make
+
+mv -f pcpmdnsd $PCPBIN
