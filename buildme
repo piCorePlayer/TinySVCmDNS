@@ -16,5 +16,5 @@ esac
 
 make clean
 make
-
+strip pcpmdnsd
 mv -f pcpmdnsd $PCPBIN

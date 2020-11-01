@@ -98,7 +98,7 @@ static void sighandler(int signum) {
 
 	mdns_service_destroy(svc_http);
 	mdns_service_destroy(svc_ssh);
-//	mdns_service_destroy(svc_deviceinfo);
+	mdns_service_destroy(svc_deviceinfo);
 	mdnsd_stop(svr);
 	running = 0;
 }
@@ -110,8 +110,9 @@ int main(int argc, char **argv) {
 	char *optarg = NULL;
 	int optind = 1;
 	int i;
-	char host[80] = "";
-	char hostname[80] = "";
+	char *host = NULL;
+	char *hostname = NULL;
+
 	struct in_addr host_ip;
 	char *ipv4addr = NULL;
 	char *local = ".local";
@@ -140,14 +141,17 @@ int main(int argc, char **argv) {
 				//char *hostname = "mypCP.local";
 
 				if (!strstr(optarg, local)){
-					snprintf(host, sizeof(host), "%s", optarg);
-					snprintf(hostname, sizeof(hostname), "%s%s", optarg, local);
-					//printf("%s\n",hostname);
+					host = optarg;
+					hostname = malloc( strlen(optarg) + 8);
+					strcat(strcat( hostname, optarg), local);
+//					printf("1:%s:%s\n",host,hostname);
 				} else {
-					snprintf(hostname, sizeof(hostname), "%s", optarg);
-					//printf("%s\n",hostname);
+					hostname = malloc( strlen(optarg) + 1);
+					strcat( hostname, optarg);
+					host = strtok( optarg, ".");
+//					printf("2:%s:%s\n",host,hostname);
 				}
-				for(int i = 0; hostname[i]; i++){
+				for(int i = 0;i<strlen(hostname); i++){
 				  hostname[i] = tolower(hostname[i]);
 				}
 				break;
@@ -212,32 +216,31 @@ int main(int argc, char **argv) {
 	mdnsd_add_rr(svr, aaaa_e);
 */
 	char adminurl[80]= "";
-
 	snprintf(adminurl, sizeof(adminurl), "%s%s", "adminurl=http://", hostname);
 
 	const char *txt[] = {
 		adminurl,
-//		"path=/mywebsite", 
 		NULL
 	};
 	svc_http = mdnsd_register_svc(svr, host,
 									"_http._tcp.local", 80, NULL, txt);
+
 	const char *txt1[] = {
 	   adminurl,
-		"path=/mywebsite", 
 		NULL
 	};
 	svc_ssh = mdnsd_register_svc(svr, host,
 									"_sftp-ssh._tcp.local", 22, NULL, txt1);
 
-//	const char *txt2[] = {
-//		"adminurl=http://pcp-jive2.local",
-//		"path=/mywebsite", 
-//		NULL
-//	};
-//	svc_deviceinfo = mdnsd_register_svc(svr, host,
-//	                                    "_device-info._tcp.local", 1, NULL, txt2);
+	char modelname[80]="";
+	snprintf(modelname, sizeof(modelname), "%s%s", "name=", hostname);
 
+	const char *txt2[] = {
+		"model=piCorePlayer Audio Device",
+		NULL
+	};
+	svc_deviceinfo = mdnsd_register_svc(svr, host,
+	                                    "_device-info._tcp.local", 0, NULL, txt2);
 
 	signal(SIGINT, sighandler);
 	signal(SIGTERM, sighandler);
@@ -247,6 +250,6 @@ int main(int argc, char **argv) {
 		sleep(1);
 	}
 //	fprintf(stderr,"Exiting...\n");
-
+	free(hostname);
 	exit(0);
 }

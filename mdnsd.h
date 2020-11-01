@@ -60,5 +60,6 @@ void mdns_service_destroy(struct mdns_service *srv);
 // remove AND destroys the mdns_service struct returned by mdnsd_register_svc()
 void mdns_service_remove(struct mdnsd *svr, struct mdns_service *svc);
 
+void mdnsd_add_rr(struct mdnsd *svr, struct rr_entry *rr);
 
 #endif/*!__MDNSD_H__*/
